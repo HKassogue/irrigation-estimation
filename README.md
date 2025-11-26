@@ -1,26 +1,26 @@
-## Résolution d'un problème d'estimation des irrigations par la méthode de tir, en dimensions 1 et 2
+## Resolution of a problem of irrigation water estimation using the shooting method, in dimensions $n=1$ et $n=2$
 
 **But.** 
 
-Pour $A\in\mathcal{M}_{2}(\mathbb{R})$, $G_2\in\mathcal{M}_{2}(\mathbb{R})$, $C\in\mathcal{M}_{2}(\mathbb{R})$, et $q_1,q_2>0$ des pondérations, construire le couple optimal
+For given $A\in\mathcal{M}_{n}(\mathbb{R})$, $G_2\in\mathcal{M}_{n}(\mathbb{R})$, $C\in\mathcal{M}_{n}(\mathbb{R})$, and $q_1,q_2>0$ considered ponderations, we want to construct the optimal pair
 ```math
 \begin{aligned}
 h^\star(t) &= -\tfrac{1}{q_2} G_2^\top p(t),\\
 z(0) &= -\tfrac{1}{q_1} p(0)
 \end{aligned}
 ```
-où $(z,p)$ est solution du système d’optimalité donné par le TPBVP:
+where $(z,p)$ is solution of the optimality system  given by the TPBVP:
 ```math
 \begin{aligned}
 z'(t) &= A z(t) + G h^\star(t) = A z(t) - \tfrac{1}{q_2} G G^\top p(t), \quad z(0) = -\tfrac{1}{q_1} s,\\
 p'(t) &= -A^\top p(t) - C^\top\!\big(C z(t) - y^{\mathrm m}(t)\big), \quad p(T)=0,
 \end{aligned}
 ```
-et $s := p(0)\in\mathbb{R}^n$ est **l’inconnue de tir**. 
+and $s := p(0)\in\mathbb{R}^n$ is **the shoot unknown**. 
 
 ---
 
-### Principe de résolution par tir exact (pseudo-code)
+### Implementation scheme (pseudo-code)
 1. Give input data 
     - System: A, G2, C
     - Objective: z0, h as known
