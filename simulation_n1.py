@@ -215,18 +215,14 @@ z0_est, z_est, h_est = reconstruction(y_m)
 
 # %%
 # Step 5: quick plots
-import matplotlib.pyplot as plt
-import os
-
 outdir = "figs"
 """Create directory if it does not exist."""
 os.makedirs(outdir, exist_ok=True)
 
 plt.figure(figsize=(8, 5)); plt.plot(t, h_true, label="h true"); plt.plot(t, h_est, "--", label="h estimated"); plt.legend(); plt.xlabel("t"); plt.ylabel("h(t)"); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_h_true_vs_h_estimated.png"), dpi=200)
+plt.savefig(os.path.join(outdir, "fig_n1_h_true_vs_h_estimated.png"), dpi=200); plt.close()
 plt.figure(figsize=(8, 5)); plt.plot(t, z_true, label="z true"); plt.plot(t, z_est, "--", label="z estimated"); plt.legend(); plt.xlabel("t"); plt.ylabel("z(t)"); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_z_true_vs_z_estimated.png"), dpi=200)
-plt.show()
+plt.savefig(os.path.join(outdir, "fig_n1_z_true_vs_z_estimated.png"), dpi=200); plt.close()
 
 # %%
 # Metrics
@@ -285,7 +281,7 @@ plt.xlabel("t"); plt.ylabel("h(t)")
 # plt.title("Sensibility in q2 of h")
 plt.grid(alpha=0.7, linewidth=0.5)
 plt.legend(); plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_h_q2_sensibility.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_h_q2_sensibility.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(t, z_true, "k-", label=f"z true")
@@ -295,7 +291,7 @@ plt.xlabel("t"); plt.ylabel("z(t)")
 # plt.title("Sensibility in q2 of z")
 plt.grid(alpha=0.7, linewidth=0.5)
 plt.legend(); plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_z_q2_sensibility.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_z_q2_sensibility.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["q2"], metrics["z0_error"], marker="o")
@@ -305,7 +301,7 @@ plt.grid(alpha=0.7, linewidth=0.5)
 plt.xlabel("q2"); plt.ylabel(r"$z_{0Energy}=|z_0 - z_0^\star|$")
 # plt.title(r"Error of $z_0$")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_z0_error.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_z0_error.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["q2"], metrics["z0_energy"], marker="o")
@@ -315,7 +311,7 @@ plt.grid(alpha=0.7, linewidth=0.5)
 plt.xlabel("q2"); plt.ylabel(r"$|z_0^\star|$")
 # plt.title(r"Energy of $z_0$")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_z0_energy.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_z0_energy.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["q2"], metrics["z_rmse"], marker="o")
@@ -325,7 +321,7 @@ plt.grid(alpha=0.7, linewidth=0.5)
 plt.xlabel("q2"); plt.ylabel(r"$RMSE_z$")
 # plt.title(r"$RMSE_z$")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_z_rmse.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_z_rmse.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["q2"], metrics["h_rmse"], marker="o")
@@ -335,7 +331,7 @@ plt.grid(alpha=0.7, linewidth=0.5)
 plt.xlabel("q2"); plt.ylabel(r"$RMSE_h$")
 # plt.title(r"$RMSE_h$")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_h_rmse.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_h_rmse.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["q2"], metrics["misfit"], marker="o")
@@ -345,7 +341,7 @@ plt.grid(alpha=0.7, linewidth=0.5)
 plt.xlabel("q2"); plt.ylabel(r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$")
 # plt.title("Y Misfit as function of q2")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_misfit_q2_sensibility.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_misfit_q2_sensibility.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["q2"], metrics["energy"], marker="o")
@@ -355,7 +351,7 @@ plt.grid(alpha=0.7, linewidth=0.5)
 plt.xlabel("q2"); plt.ylabel(r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$")
 # plt.title("H energy as function of q2")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_energy_q2_sensibility.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_energy_q2_sensibility.png"), dpi=200); plt.close()
 
 plt.figure(figsize=(8, 5))
 plt.plot(metrics["misfit"], metrics["energy"], marker="o")
@@ -366,6 +362,6 @@ plt.xlabel(r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$")
 plt.ylabel(r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$")
 # plt.title("Compromis YMisfit/HEnergy")
 plt.tight_layout()
-plt.savefig(os.path.join(outdir, "fig_n1_misfit_energy_q2_sensibility.png"), dpi=200); #plt.close()
+plt.savefig(os.path.join(outdir, "fig_n1_misfit_energy_q2_sensibility.png"), dpi=200); plt.close()
 
-plt.show()
+print("\nAll done. Outputs figures are saved under:", outdir)
