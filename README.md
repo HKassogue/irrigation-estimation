@@ -41,17 +41,22 @@ and $s := p(0)\in\mathbb{R}^n$ is **the shoot unknown**.
         - $Z0Error = z_0 - z_{0est}$
         - $RMSE_z = \sqrt{mean((z_{true} - z_{est})^2)}$
         - $RMSE_h = \sqrt{mean((z_{true} - z_{est})^2)}$
-        - $Y Misfit = \int_0^T \|Cz(t)-y^m(t)\|^2 dt$
-        - $H Energy = \int_0^T \|h(t)\|^2 dt$
+        - $YMisfit = \int_0^T \|Cz(t)-y^m(t)\|^2 dt$
+        - $z_0Energy = \|z_0\|$
+        - $HEnergy = \int_0^T \|h(t)\|^2 dt$
+        - $z_0HEnergy = z_0Energy^2 + HEnergy$
     - Plots:
         - $z_{true}$ vs $z_{est}$
         - $h_{true}$ vs $h_{est}$
         - $z_{est}$ as function of q1 and/or q2
         - $h_{est}$ as function of q1 and/or q2
+        - $z0Error$ as function of q1 and/or q2
         - $RMSE_z$ as function of q1 and/or q2
         - $RMSE_h$ as function of q1 and/or q2
-        - $Y Misfit$ as function of q1 and/or q2
-        - $H Energy$ as function of q1 and/or q2
+        - $YMisfit$ as function of q1 and/or q2
+        - $z_0Energy$ as function of q1 and/or q2
+        - $HEnergy$ as function of q1 and/or q2
+        - $z_0HEnergy$ as function of q1 and/or q2
 
 ---
 
@@ -60,34 +65,35 @@ and $s := p(0)\in\mathbb{R}^n$ is **the shoot unknown**.
 - System: $A=2, G_2=3, C=4.9$
 - Objective: $z_{0true}=4, h_{\mathrm{true}}(t)=t(1 - t)$
 - Time discretization: $T=1, N=200$
-- Regulation: $q_1=0.001, q_2=0.25$
+- Regulation: $q_1=0.001, q_2=3.5$
 
 *With $n=2$:*
-- System: $A = \begin{bmatrix}2 & 0 \\[3pt] 0 & 4\end{bmatrix},\;G_2 = \begin{bmatrix}3 & 0 \\ 0 & 2.5\end{bmatrix}$ and $C = \begin{bmatrix}4.9 & 0 \\ 0 & 9\end{bmatrix}$
-- Objective: $z_{0true} = \begin{bmatrix}4 \\ 5\end{bmatrix}$, $
-h_{1\mathrm{true}}(t) = 0.5\,t(1-t), \;
-h_{2\mathrm{true}}(t) = 1-(t-0.5)^2,
-$
+- System: System: $A = \begin{bmatrix}-0.06 & 0.01 \\[3pt] 0.01  & -0.06 \end{bmatrix},\;G_2 = \begin{bmatrix}0.1 & 0 \\ 0 & 0.1\end{bmatrix}$ and $C = \begin{bmatrix}1 & 0 \\ 0 & 1\end{bmatrix}$
+- Objective: $z_{0true} = \begin{bmatrix}0.4 \\ 0.7\end{bmatrix}$, $h_{\mathrm{true}}(t) = \begin{bmatrix}t(1-t) \\ 0.5\,t(1-t)\end{bmatrix}$
 - Time discretization: $T=1, N=200$
-- Regulation: $q_1=0.001, q_2=0.5$
+- Regulation: $q_1=10^{-5}, q_2=10^{-5}$
 
 ---
 
 ### Ouput example
 **Metrics**
 *With $n=1$:* <br>
-z0 true = 4, z0 estimated = 4.000, error = 0.000<br>
-RMSE(z) = 0.003<br>
-RMSE(h) = 0.044<br>
-Y Misfit = 0.000<br>
-h Energy = 0.048
+z0 true = 4, z0 estimated = 4.040606328767682, error = 0.04060632876768189<br>
+RMSE_z    = 0.03310815573827195<br>
+RMSE_h    = 0.010816453903076895<br>
+YMisfit   = 0.026098809107473274<br>
+z0Energy  = 4.040606328767682<br>
+hEnergy   = 0.0326768584236353<br>
+z0HEnergy = 16.359176362501078
 
 *With $n=2$:* <br>
-z0 true = [4 5]', z0 estimated = [4.00225004 5.06704223]', error = 0.067<br>
-RMSE(z) = 0.041<br>
-RMSE(h) = 0.962<br>
-Y Misfit = 0.233<br>
-h Energy = 4.477
+z0 true = [0.4 0.7], z0 estimated = [0.39997393 0.69982875], z0 error = 0.00017322682302418966<br>
+RMSE_z    = 4.7125821331296974e-05<br>
+RMSE_h    = 0.00826870734086433<br>
+YMisfit   = 4.3127306750436686e-09<br>
+z0Energy  = 0.806064151243763<br>
+HEnergy   = 0.04102883167179921<br>
+z0HEnergy = 0.6857054886574083
 
 **Plots**
 
