@@ -1,6 +1,8 @@
 # %% [markdown]
 # ## Resolution of a problem of irrigation water estimation using the shooting method in dimension 2
 
+# **But.** 
+
 # For given $A\in\mathcal{M}_2(\mathbb{R})$, $G_2\in\mathcal{M}_2(\mathbb{R})$, $C\in\mathcal{M}_2(\mathbb{R})$, and $q_1,q_2>0$ considered ponderation weights, we want to construct the optimal pair
 # ```math
 # \begin{aligned}
@@ -88,6 +90,11 @@ import os
 
 
 # %%
+# Import steps 1-5 functions
+from functions_n2 import *
+
+
+# %%
 # Step 1: Data input
 # System parameters
 n = 2
@@ -111,10 +118,6 @@ T = 1
 N = 200
 dt = T / N
 t  = np.linspace(0, T, N+1)
-
-# %%
-# Import steps 1-5 functions
-from functions_n2 import *
 
 
 # %%
@@ -145,7 +148,7 @@ print(df)
 # %%
 # Step 5: quick plots
 print('-'*100,'\nPlot process: ...')
-make_plots(h_true, z_true, z_est, h_est, t, q1, q2, save=True, outdir = "figs")
+make_plots(h_true, z_true, z_est, h_est, t, show=False, save=True, file_end=f"q1_{q1}_q2_{q2}", outdir = "figs")
 
 
 # %%
@@ -173,17 +176,17 @@ print('-'*70, '\nMetrics:')
 print(metrics)
 
 # Redefining q2 values for elbow detection
+print('-'*70, "\nRedefining q2 values for elbow detection:\nIn progress...")
 q2_list = [0.00001, 0.00002, 0.00003, 0.00004, 0.00005, 0.00006, 0.00007, 0.00008, 0.00009,  0.0001]    # refined and zoomed
 q2_uniq_vals += q2_list     # needed for 3D plots
+curves_z1, curves_z2, curves_h1, curves_h2, metrics = q2_sensibility(A, G2, C, z0, h1, h2, T, N, q1, q2_list, show=False, save=True, file_end='red', outdir = "figs")
 
-print('-'*70, "\nElbow-based compromise (L-curve on (RMSE_z, RMSE_h)):\nIn progress...")
-curves_z1, curves_z2, curves_h1, curves_h2, metrics = q2_sensibility(A, G2, C, z0, h1, h2, T, N, q1, q2_list, show=False, save=False, outdir = "figs")
+print('-'*70, "\nElbow-based compromise (L-curve on (RMSE_z, RMSE_h)):")
 idx_elbow_rmse = find_Lcurve_elbow(metrics, x_col="z_rmse", y_col="h_rmse", use_log=True, sort_on='q2')
 row_star_rmse = metrics.loc[idx_elbow_rmse]
 print(row_star_rmse)
 
-print('-'*70, "\nElbow-based compromise (L-curve on (YMisfit, Energy)):\nIn progress...")
-curves_z1, curves_z2, curves_h1, curves_h2, metrics = q2_sensibility(A, G2, C, z0, h1, h2, T, N, q1, q2_list, show=False, save=False, outdir = "figs")
+print('-'*70, "\nElbow-based compromise (L-curve on (YMisfit, Energy)):")
 idx_elbow_misfit = find_Lcurve_elbow(metrics, x_col="misfit", y_col="energy", use_log=True, sort_on='q2')
 row_star_misfit = metrics.loc[idx_elbow_misfit]
 print(row_star_misfit)
@@ -202,12 +205,13 @@ print('-'*70, '\nMetrics:')
 print(metrics)
 
 # Redefining q1 values for elbow detection
+print('-'*70, "\nRedefining q1 values for elbow detection:\nIn progress...")
 # q1_list = [1e-10, 5e-10, 1e-9, 5e-9, 1e-8, 5e-8, 1e-7, 5e-7, 1e-6, 5e-6, 1e-5]
 q1_list = [1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 7e-6, 8e-6, 9e-6, 1e-5]
 q1_uniq_vals += q1_list     # needed for 3D plots
+curves_z1, curves_z2, curves_h1, curves_h2, metrics = q1_sensibility(A, G2, C, z0, h1, h2, T, N, q1_list, q2, show=False, save=True, file_end="red", outdir = "figs")
 
-print('-'*70, "\nElbow-based compromise (L-curve on (RMSE_z, RMSE_h)):\nIn progress...")
-curves_z1, curves_z2, curves_h1, curves_h2, metrics = q1_sensibility(A, G2, C, z0, h1, h2, T, N, q1_list, q2, show=False, save=False, outdir = "figs")
+print('-'*70, "\nElbow-based compromise (L-curve on (RMSE_z, RMSE_h)):")
 idx_elbow_rmse = find_Lcurve_elbow(metrics, x_col="z_rmse", y_col="h_rmse", use_log=True, sort_on='q1')
 row_star_rmse = metrics.loc[idx_elbow_rmse]
 print(row_star_rmse)
@@ -221,17 +225,18 @@ q1_uniq_vals += q1_list     # needed for 3D plots
 q2 = 4e-5  # choice from L-curve on (YMisfit, z0HEnergy)
 print('='*19, f'Sensibility of q1 with q2={q2}', '='*19)
 print('Proceding ...')
-curves_z1, curves_z2, curves_h1, curves_h2, metrics = q1_sensibility(A, G2, C, z0, h1, h2, T, N, q1_list, q2, show=False, save=False, outdir = "figs")
+curves_z1, curves_z2, curves_h1, curves_h2, metrics = q1_sensibility(A, G2, C, z0, h1, h2, T, N, q1_list, q2, show=False, save=True, outdir = "figs")
 print('-'*70, '\nMetrics:')
 print(metrics)
 
 # Redefining q1 values for elbow detection
+print('-'*70, "\nRedefining q1 values for elbow detection:\nIn progress...")
 # q1_list = [1e-10, 5e-10, 1e-9, 5e-9, 1e-8, 5e-8, 1e-7, 5e-7, 1e-6, 5e-6, 1e-5]
 q1_list = [1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 7e-6, 8e-6, 9e-6, 1e-5]
 q1_uniq_vals += q1_list     # needed for 3D plots
+curves_z1, curves_z2, curves_h1, curves_h2, metrics = q1_sensibility(A, G2, C, z0, h1, h2, T, N, q1_list, q2, show=False, save=True, file_end="red", outdir = "figs")
 
-print('-'*70, "\nElbow-based compromise (L-curve on (YMisfit, Energy)):\nIn progress...")
-curves_z1, curves_z2, curves_h1, curves_h2, metrics = q1_sensibility(A, G2, C, z0, h1, h2, T, N, q1_list, q2, show=False, save=False, outdir = "figs")
+print('-'*70, "\nElbow-based compromise (L-curve on (YMisfit, Energy)):")
 idx_elbow_misfit = find_Lcurve_elbow(metrics, x_col="misfit", y_col="energy", use_log=True, sort_on='q1')
 row_star_misfit = metrics.loc[idx_elbow_misfit]
 print(row_star_misfit)
@@ -241,13 +246,13 @@ print(row_star_misfit)
 # Sensibility of q1 and q2: sweep q1 and q2, compute solutions & metrics, and search optimum q1 and q2 as L-curve compromise on RMSE_z/RMSE_h
 q1_vals = list(np.unique(q1_uniq_vals))
 q2_vals = list(np.unique(q2_uniq_vals))
-print(q1_vals)
-print(q2_vals)
 
 print('='*24, f'Sensibility of q1 and q2 with L-curve compromise on RMSE_z/RMSE_h', '='*24)
+print(q1_vals)
+print(q2_vals)
 print('Proceding ...')
 curves_z, curves_h, metrics, q1_opt, q2_opt = q12_sensibility_with_optimum(A, G2, C, z0, h1, h2, T=1, N=200, 
-                                                                           q1_list=q1_vals, q2_list=q2_vals, elbow_on='rmse', save=True, outdir="figs")
+                                                                           q1_list=q1_vals, q2_list=q2_vals, elbow_on='rmse', show=False, save=True, file_end="rmse_elbow", outdir="figs")
 print('-'*105, '\nMetrics:')
 print(metrics)
 
@@ -271,15 +276,17 @@ print(f"HEnergy   = {henergy}")
 
 # Step 5: quick plots
 print('-'*105,'\nPlot process: ...')
-make_plots(h_true, z_true, z_est, h_est, t, q1_opt, q2_opt, save=True, outdir = "figs")
+make_plots(h_true, z_true, z_est, h_est, t, show=False, save=True, file_end=f"q1_{q1_opt}_q2_{q2_opt}_from_elbow", outdir = "figs")
 
 
 # %%
 # Sensibility of q1 and q2: sweep q1 and q2, compute solutions & metrics, and search optimum q1 and q2 as L-curve compromise on YMisfit/HEnergy
 print('='*24, f'Sensibility of q1 and q2 with L-curve compromise on YMisfit/HEnergy', '='*24)
+print(q1_uniq_vals)
+print(q2_uniq_vals)
 print('Proceding ...')
 curves_z, curves_h, metrics, q1_opt, q2_opt = q12_sensibility_with_optimum(A, G2, C, z0, h1, h2, T=1, N=200, 
-                                                                           q1_list=q1_vals, q2_list=q2_vals, elbow_on='misfit', save=True, outdir="figs")
+                                                                           q1_list=q1_vals, q2_list=q2_vals, elbow_on='misfit', show=False, save=True, file_end="misfit_elbow", outdir="figs")
 print('-'*105, '\nMetrics:')
 print(metrics)
 
@@ -303,4 +310,4 @@ print(f"HEnergy   = {henergy}")
 
 # Step 5: quick plots
 print('-'*105,'\nPlot process: ...')
-make_plots(h_true, z_true, z_est, h_est, t, q1_opt, q2_opt, save=True, outdir = "figs")
+make_plots(h_true, z_true, z_est, h_est, t, show=False, save=True, file_end=f"q1_{q1_opt}_q2_{q2_opt}_from_elbow", outdir = "figs")

@@ -65,7 +65,9 @@ import os
 # Various functions definition
 def forward_z_from_h(A, G2, z0, h, N, dt):
     """Integrate z'(t) = A z(t) + G2(t) h(t) from known z0 and h using RK4 over grid t
-    Then compute Y(t) = C z(t)"""
+    Then compute Y(t) = C z(t)
+    - z0 real
+    - h numpy array (N+1, )"""
     z = np.zeros(N+1); z[0] = z0
     for k in range(N):
         zk = z[k]; hk, hk_1 = h[k], h[k+1]
@@ -86,6 +88,7 @@ def backward_z_p_by_shooting(A, G2, C, N, dt, y_meas, q1, q2, s):
         z(0) = -s/q1, p(T) = 0 with s=p(0)
         s : vector (m,)
         y_meas : numpy array (N+1, m) containing y^m(t_k)
+        q1, q2: scalar
     """
     z = - (1.0 / q1) * s.copy()
     p = s.copy()
@@ -217,23 +220,29 @@ def compute_metrics(C, z0_true, h_true, z_true, y_m, z0_est, z_est, h_est, t):
     return z0_error, z0_energy, z_rmse, h_rmse, misfit, henergy
 
 
-def make_plots(h_true, z_true, z_est, h_est, t, q1, q2, save=False, outdir = "figs"):
+def make_plots(h_true, z_true, z_est, h_est, t, show=True, save=False, file_end=None, outdir = "figs"):
     """Plots the outputs, and/or save them optionnaly in a created directory if it does not exist."""
-    if not save:
-        plt.figure(figsize=(8, 5)); plt.plot(t, h_true, label="h true"); plt.plot(t, h_est, "--", label="h estimated"); plt.legend(); plt.xlabel("t"); plt.ylabel("h(t)"); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
-        plt.figure(figsize=(8, 5)); plt.plot(t, z_true, label="z true"); plt.plot(t, z_est, "--", label="z estimated"); plt.legend(); plt.xlabel("t"); plt.ylabel("z(t)"); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
-        plt.show()
-    else:
+    def plot(y1, y2, y1label, y2label, ylabel, filename):
+        plt.figure(figsize=(8, 5)); plt.plot(t, y1, label=y1label); plt.plot(t, y2, "--", label=y2label); plt.legend(); plt.xlabel("t"); plt.ylabel(ylabel); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
+        if save and filename:
+            plt.savefig(os.path.join(outdir, filename), dpi=200)
+        if show:
+            plt.show()
+        else:
+            plt.close()
+
+    if save:
         outdir = 'outputs/' + outdir
         os.makedirs(outdir, exist_ok=True)
-        plt.figure(figsize=(8, 5)); plt.plot(t, h_true, label="h true"); plt.plot(t, h_est, "--", label="h estimated"); plt.legend(); plt.xlabel("t"); plt.ylabel("h(t)"); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
-        plt.savefig(os.path.join(outdir, f"fig_n1_h_true_vs_h_estimated_q1_{q1}_q2_{q2}.png"), dpi=200); plt.close()
-        plt.figure(figsize=(8, 5)); plt.plot(t, z_true, label="z true"); plt.plot(t, z_est, "--", label="z estimated"); plt.legend(); plt.xlabel("t"); plt.ylabel("z(t)"); plt.grid(alpha=0.7, linewidth=0.5); plt.tight_layout()
-        plt.savefig(os.path.join(outdir, f"fig_n1_z_true_vs_z_estimated_q1_{q1}_q2_{q2}.png"), dpi=200); plt.close()
+
+    plot(h_true, h_est, "h true", "h estimated", r"$h(t)$", f"fig_n1_h_true_vs_h_estimated_{file_end}.png")
+    plot(z_true, z_est, "z true", "z estimated", r"$z(t)$", f"fig_n1_z_true_vs_z_estimated_{file_end}.png")
+
+    if save:
         print("All done. Outputs figures are saved under:", outdir)
 
 
-def q2_sensibility(A, G2, C, z0, h, T=1, N=200, q1=1, q2_list=[0.25, 0.5, 1], show=False, save=False, outdir = "figs"):
+def q2_sensibility(A, G2, C, z0, h, T=1, N=200, q1=1, q2_list=[0.25, 0.5, 1], show=False, save=False, file_end=None, outdir = "figs"):
     """Sensibility of q2: sweep q2, compute solutions & metrics"""
     # Step 1 : Data input (completion)
     dt = T / N
@@ -270,7 +279,7 @@ def q2_sensibility(A, G2, C, z0, h, T=1, N=200, q1=1, q2_list=[0.25, 0.5, 1], sh
     metrics = pd.DataFrame(metrics).sort_values("q2").reset_index(drop=True)
     
     # --- Utilitary function to plot/save the h or z curve over t per q2 ---
-    def make_plot_over_t_per_q2(values_true, values_est, label, ylabel, title=None, show=show, save=save, filename=None):
+    def make_plot_over_t_per_q2(values_true, values_est, label, ylabel, title=None, filename=None):
         plt.figure(figsize=(8, 5))
         plt.plot(t, values_true, "k-", label=label)
         for i, q2 in enumerate(q2_list):
@@ -285,10 +294,9 @@ def q2_sensibility(A, G2, C, z0, h, T=1, N=200, q1=1, q2_list=[0.25, 0.5, 1], sh
             plt.show()
         else:
             plt.close()
-        
 
     # --- Utilitary function to plot/save the metrics over q2 and anotate it ---
-    def make_plot_over_q2_and_anotate(x, y, xlabel, ylabel, title=None, show=show, save=save, filename=None):
+    def make_plot_over_q2_and_anotate(x, y, xlabel, ylabel, title=None, filename=None):
         plt.figure(figsize=(8, 5))
         plt.plot(metrics[x], metrics[y], marker="o")
         for i, row in metrics.iterrows():
@@ -308,72 +316,74 @@ def q2_sensibility(A, G2, C, z0, h, T=1, N=200, q1=1, q2_list=[0.25, 0.5, 1], sh
     if save:
         outdir = 'outputs/' + outdir
         os.makedirs(outdir, exist_ok=True)
+    
+    file_end = f"q2_sensibility_with_q1_{q1}_{file_end}" if file_end else f"q2_sensibility_with_q1_{q1}"
 
     make_plot_over_t_per_q2(h_true, curves_h, 
                             label=f"h true", 
                             ylabel="h(t)", 
                             title="Sensibility in q2 of h", 
-                            save=save, filename=f"fig_n1_h_q2_sensibility_with_q1_{q1}.png")
+                            filename=f"fig_n1_h_{file_end}.png")
     make_plot_over_t_per_q2(z_true, curves_z, 
                             label=f"z true", 
                             ylabel="z(t)", 
                             title="Sensibility in q2 of z", 
-                            save=save, filename=f"fig_n1_z_q2_sensibility_with_q1_{q1}.png")
+                            filename=f"fig_n1_z_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'z0_error', 
                                     xlabel='q2', 
                                     ylabel=r"$z_{0Error}=|z_0 - z_0^\star|$", 
                                     title=r"Error of $z_0$", 
-                                    save=save, filename=f"fig_n1_z0error_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_z0error_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'z0_energy', 
                                     xlabel='q2', 
                                     ylabel=r"$z_{0Energy}=|z_0^\star|$", 
                                     title=r"Energy of $z_0$", 
-                                    save=save, filename=f"fig_n1_z0energy_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_z0energy_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'z_rmse', 
                                     xlabel='q2', 
                                     ylabel=r"$RMSE_z$", 
                                     title=r"$RMSE_z$", 
-                                    save=save, filename=f"fig_n1_z_rmse_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_z_rmse_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'h_rmse', 
                                     xlabel='q2', 
                                     ylabel=r"$RMSE_h$", 
                                     title=r"$RMSE_h$", 
-                                    save=save, filename=f"fig_n1_h_rmse_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_h_rmse_{file_end}.png")
     make_plot_over_q2_and_anotate('z_rmse', 'h_rmse', 
                                     xlabel=r"$RMSE_z$", 
                                     ylabel=r"$RMSE_h$", 
                                     title=r"Compromis $RMSE_z$/$RMSE_h$", 
-                                    save=save, filename=f"fig_n1_z_h_rmse_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_z_h_rmse_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'misfit', 
                                     xlabel='q2', 
                                     ylabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     title="Y Misfit as function of q2", 
-                                    save=save, filename=f"fig_n1_misfit_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_misfit_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'henergy', 
                                     xlabel='q2', 
                                     ylabel=r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$", 
                                     title="H energy as function of q2", 
-                                    save=save, filename=f"fig_n1_henergy_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_henergy_{file_end}.png")
     make_plot_over_q2_and_anotate('q2', 'energy', 
                                     xlabel='q2', 
                                     ylabel=r"$z_0\mathrm{HEnergy}=\|z_0\|^2 + \int_0^T \|h(t)\|^2 dt$", 
                                     title=r"$z_0$HEnergy as function of q2", 
-                                    save=save, filename=f"fig_n1_z0henergy_q2_sensibility_with_q1_{q1}.png")                                
+                                    filename=f"fig_n1_z0henergy_{file_end}.png")                                
     make_plot_over_q2_and_anotate('misfit', 'henergy', 
                                     xlabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     ylabel=r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$", 
                                     title="Compromis YMisfit/HEnergy", 
-                                    save=save, filename=f"fig_n1_misfit_henergy_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_misfit_henergy_{file_end}.png")
     make_plot_over_q2_and_anotate('misfit', 'z0_energy', 
                                     xlabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     ylabel=r"$z_0\mathrm{Energy}=\|z_0\|$", 
                                     title=r"Compromis YMisfit/$z_0$Energy", 
-                                    save=save, filename=f"fig_n1_misfit_z0energy_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_misfit_z0energy_{file_end}.png")
     make_plot_over_q2_and_anotate('misfit', 'energy', 
                                     xlabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     ylabel=r"$z_0\mathrm{HEnergy}=\|z_0\|^2 + \int_0^T \|h(t)\|^2 dt$", 
                                     title=r"Compromis YMisfit/$z_0$HEnergy", 
-                                    save=save, filename=f"fig_n1_misfit_z0henergy_q2_sensibility_with_q1_{q1}.png")
+                                    filename=f"fig_n1_misfit_z0henergy_{file_end}.png")
         
     if save:
         print("All done. Outputs figures are saved under:", outdir)
@@ -381,7 +391,7 @@ def q2_sensibility(A, G2, C, z0, h, T=1, N=200, q1=1, q2_list=[0.25, 0.5, 1], sh
     return curves_z, curves_h, metrics
 
 
-def q1_sensibility(A, G2, C, z0, h, T=1, N=200, q1_list=[0.25, 0.5, 1], q2=1, show=False, save=False, outdir = "figs"):
+def q1_sensibility(A, G2, C, z0, h, T=1, N=200, q1_list=[0.25, 0.5, 1], q2=1, show=False, save=False, file_end=None, outdir = "figs"):
     """Sensibility of q1: sweep q1, compute solutions & metrics"""
     # Step 1 : Data input (completion)
     dt = T / N
@@ -418,7 +428,7 @@ def q1_sensibility(A, G2, C, z0, h, T=1, N=200, q1_list=[0.25, 0.5, 1], q2=1, sh
     metrics = pd.DataFrame(metrics).sort_values("q1").reset_index(drop=True)
 
     # --- Utilitary function to plot/save the h or z curve over t per q1 ---
-    def make_plot_over_t_per_q1(values_true, values_est, label, ylabel, title=None, show=show, save=save, filename=None):
+    def make_plot_over_t_per_q1(values_true, values_est, label, ylabel, title=None, filename=None):
         plt.figure(figsize=(8, 5))
         plt.plot(t, values_true, "k-", label=label)
         for i, q1 in enumerate(q1_list):
@@ -435,7 +445,7 @@ def q1_sensibility(A, G2, C, z0, h, T=1, N=200, q1_list=[0.25, 0.5, 1], q2=1, sh
             plt.close()
 
     # --- Utilitary function to plot/save the metrics over q1 and anotate it ---
-    def make_plot_over_q1_and_anotate(x, y, xlabel, ylabel, title=None, show=show, save=save, filename=None):
+    def make_plot_over_q1_and_anotate(x, y, xlabel, ylabel, title=None, filename=None):
         plt.figure(figsize=(8, 5))
         plt.plot(metrics[x], metrics[y], marker="o")
         for i, row in metrics.iterrows():
@@ -456,71 +466,73 @@ def q1_sensibility(A, G2, C, z0, h, T=1, N=200, q1_list=[0.25, 0.5, 1], q2=1, sh
         outdir = 'outputs/' + outdir
         os.makedirs(outdir, exist_ok=True)
 
+    file_end = f"q1_sensibility_with_q2_{q2}_{file_end}" if file_end else f"q1_sensibility_with_q2_{q2}"
+
     make_plot_over_t_per_q1(h_true, curves_h, 
                             label=f"h true", 
                             ylabel="h(t)", 
                             title="Sensibility in q1 of h", 
-                            save=save, filename=f"fig_n1_h_q1_sensibility_with_q2_{q2}.png")
+                            filename=f"fig_n1_h_{file_end}.png")
     make_plot_over_t_per_q1(z_true, curves_z, 
                             label=f"z true", 
                             ylabel="z(t)", 
                             title="Sensibility in q1 of z", 
-                            save=save, filename=f"fig_n1_z_q1_sensibility_with_q2_{q2}.png")
+                            filename=f"fig_n1_z_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'z0_error', 
                                     xlabel='q1', 
                                     ylabel=r"$z_{0Error}=|z_0 - z_0^\star|$", 
                                     title=r"Error of $z_0$", 
-                                    save=save, filename=f"fig_n1_z0error_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_z0error_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'z0_energy', 
                                     xlabel='q1', 
                                     ylabel=r"$z_{0Energy}=|z_0^\star|$", 
                                     title=r"Energy of $z_0$", 
-                                    save=save, filename=f"fig_n1_z0energy_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_z0energy_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'z_rmse', 
                                     xlabel='q1', 
                                     ylabel=r"$RMSE_z$", 
                                     title=r"$RMSE_z$", 
-                                    save=save, filename=f"fig_n1_z_rmse_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_z_rmse_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'h_rmse', 
                                     xlabel='q1', 
                                     ylabel=r"$RMSE_h$", 
                                     title=r"$RMSE_h$", 
-                                    save=save, filename=f"fig_n1_h_rmse_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_h_rmse_{file_end}.png")
     make_plot_over_q1_and_anotate('z_rmse', 'h_rmse', 
                                     xlabel=r"$RMSE_z$", 
                                     ylabel=r"$RMSE_h$", 
                                     title=r"Compromis $RMSE_z$/$RMSE_h$", 
-                                    save=save, filename=f"fig_n1_z_h_rmse_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_z_h_rmse_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'misfit', 
                                     xlabel='q1', 
                                     ylabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     title="Y Misfit as function of q1", 
-                                    save=save, filename=f"fig_n1_misfit_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_misfit_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'henergy', 
                                     xlabel='q1', 
                                     ylabel=r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$", 
                                     title="H energy as function of q1", 
-                                    save=save, filename=f"fig_n1_henergy_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_henergy_{file_end}.png")
     make_plot_over_q1_and_anotate('q1', 'energy', 
                                     xlabel='q1', 
                                     ylabel=r"$z_0\mathrm{HEnergy}=\|z_0\|^2 + \int_0^T \|h(t)\|^2 dt$", 
                                     title=r"$z_0$HEnergy as function of q1", 
-                                    save=save, filename=f"fig_n1_z0henergy_q1_sensibility_with_q2_{q2}.png")                                
+                                    filename=f"fig_n1_z0henergy_{file_end}.png")                                
     make_plot_over_q1_and_anotate('misfit', 'henergy', 
                                     xlabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     ylabel=r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$", 
                                     title="Compromis YMisfit/HEnergy", 
-                                    save=save, filename=f"fig_n1_misfit_henergy_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_misfit_henergy_{file_end}.png")
     make_plot_over_q1_and_anotate('misfit', 'z0_energy', 
                                     xlabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     ylabel=r"$z_0\mathrm{Energy}=\|z_0\|$", 
                                     title=r"Compromis YMisfit/$z_0$Energy", 
-                                    save=save, filename=f"fig_n1_misfit_z0energy_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_misfit_z0energy_{file_end}.png")
     make_plot_over_q1_and_anotate('misfit', 'energy', 
                                     xlabel=r"$\mathrm{YMisfit}=\int_0^T\|Cz(t)-y^m(t)\|^2 dt$", 
                                     ylabel=r"$z_0\mathrm{HEnergy}=\|z_0\|^2 + \int_0^T \|h(t)\|^2 dt$", 
                                     title=r"Compromis YMisfit/$z_0$HEnergy", 
-                                    save=save, filename=f"fig_n1_misfit_z0henergy_q1_sensibility_with_q2_{q2}.png")
+                                    filename=f"fig_n1_misfit_z0henergy_{file_end}.png")
         
     if save:
         print("All done. Outputs figures are saved under:", outdir)
@@ -596,7 +608,7 @@ def find_compromise_point(metrics, x_col="z_rmse", y_col="h_rmse"):
     return idx
 
 
-def q12_sensibility_with_optimum(A, G2, C, z0, h, T=1, N=200, q1_list=(0.1, 0.25, 0.5, 1), q2_list=(0.1, 0.25, 0.5, 1), elbow_on='rmse', save=False, outdir="figs"):
+def q12_sensibility_with_optimum(A, G2, C, z0, h, T=1, N=200, q1_list=(0.1, 0.25, 0.5, 1), q2_list=(0.1, 0.25, 0.5, 1), elbow_on='rmse', show=True, save=False, file_end=None, outdir="figs"):
     """
     Sensibility of (q1, q2): sweep q1 and q2, compute solutions & metrics,
     produce 3D surfaces + 2D contour plots of the metrics as functions of (q1, q2),
@@ -690,7 +702,7 @@ def q12_sensibility_with_optimum(A, G2, C, z0, h, T=1, N=200, q1_list=(0.1, 0.25
     label = 'Compromise (RMSE_z/RMSE_h)' if elbow_on == 'rmse' else 'Compromise (YMisfit/z0HEnergy)'
 
     # --- Fonction utilitaire pour tracer/sauver une surface 3D ---
-    def plot_surface_metric(value_col, zlabel, filename, mark_opt=True, outdir=outdir):
+    def plot_surface_metric(value_col, zlabel, filename, mark_opt=True):
         Q1, Q2, Z = make_grid(metrics, value_col)
 
         fig = plt.figure(figsize=(8, 5))
@@ -713,12 +725,13 @@ def q12_sensibility_with_optimum(A, G2, C, z0, h, T=1, N=200, q1_list=(0.1, 0.25
 
         if save:
             plt.savefig(os.path.join(outdir, filename), dpi=200, bbox_inches='tight')
-            plt.close()
-        else:
+        if show:
             plt.show()
+        else:
+            plt.close()
 
     # --- Fonction utilitaire pour tracer/sauver une carte de niveaux 2D ---
-    def plot_contour_metric(value_col, clabel, filename, mark_opt=True, outdir=outdir):
+    def plot_contour_metric(value_col, clabel, filename, mark_opt=True):
         Q1, Q2, Z = make_grid(metrics, value_col)
 
         fig, ax = plt.subplots(figsize=(7, 5))
@@ -741,30 +754,33 @@ def q12_sensibility_with_optimum(A, G2, C, z0, h, T=1, N=200, q1_list=(0.1, 0.25
 
         if save:
             plt.savefig(os.path.join(outdir, filename), dpi=200, bbox_inches='tight')
-            plt.close()
-        else:
+        if show:
             plt.show()
+        else:
+            plt.close()
+
+    file_end = f"q1_q2_sensibility_{file_end}" if file_end else "q1_q2_sensibility"
 
     print('-'*70,'\nPlot process: ...')
     # --- Surfaces 3D pour chaque métrique (avec point optimal) ---
-    plot_surface_metric("z0_error",  r"$z_{0Error}=|z_0 - z_0^\star|$",             "surf_n1_z0_error_q1_q2_sensibility.png")
-    plot_surface_metric("z0_energy", r"$|z_0^\star|$",                              "surf_n1_z0_energy_q1_q2_sensibility.png")
-    plot_surface_metric("z_rmse",    r"$RMSE_z$",                                   "surf_n1_z_rmse_q1_q2_sensibility.png")
-    plot_surface_metric("h_rmse",    r"$RMSE_h$",                                   "surf_n1_h_rmse_q1_q2_sensibility.png")
-    plot_surface_metric("misfit",    r"$\mathrm{YMisfit}=\int_0^T\|Cz-y^m\|^2 dt$", "surf_n1_misfit_q1_q2_sensibility.png")
-    plot_surface_metric("henergy",   r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$",  "surf_n1_henergy_q1_q2_sensibility.png")
-    plot_surface_metric("energy",    r"$z_0\mathrm{HEnergy}=\|z_0\|^2+\int_0^T \|h(t)\|^2 dt$", "surf_n1_z0henergy_q1_q2_sensibility.png")
-    plot_surface_metric("objective", r"$J(z_0^*,h^*)$ as function of $(q_1, q_2)$",             "surf_n1_objective_q1_q2_sensibility.png")
+    plot_surface_metric("z0_error",  r"$z_{0Error}=|z_0 - z_0^\star|$",             f"surf_n1_z0_error_{file_end}.png")
+    plot_surface_metric("z0_energy", r"$|z_0^\star|$",                              f"surf_n1_z0_energy_{file_end}.png")
+    plot_surface_metric("z_rmse",    r"$RMSE_z$",                                   f"surf_n1_z_rmse_{file_end}.png")
+    plot_surface_metric("h_rmse",    r"$RMSE_h$",                                   f"surf_n1_h_rmse_{file_end}.png")
+    plot_surface_metric("misfit",    r"$\mathrm{YMisfit}=\int_0^T\|Cz-y^m\|^2 dt$", f"surf_n1_misfit_{file_end}.png")
+    plot_surface_metric("henergy",   r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$",  f"surf_n1_henergy_{file_end}.png")
+    plot_surface_metric("energy",    r"$z_0\mathrm{HEnergy}=\|z_0\|^2+\int_0^T \|h(t)\|^2 dt$", f"surf_n1_z0henergy_{file_end}.png")
+    plot_surface_metric("objective", r"$J(z_0^*,h^*)$ as function of $(q_1, q_2)$",             f"surf_n1_objective_{file_end}.png")
 
     # --- Contours 2D pour chaque métrique (avec point optimal) ---
-    plot_contour_metric("z0_error",  r"$z_{0Error}=|z_0 - z_0^\star|$",             "contour_n1_z0_error_q1_q2_sensibility.png")
-    plot_contour_metric("z0_energy", r"$|z_0^\star|$",                              "contour_n1_z0_energy_q1_q2_sensibility.png")
-    plot_contour_metric("z_rmse",    r"$RMSE_z$",                                   "contour_n1_z_rmse_q1_q2_sensibility.png")
-    plot_contour_metric("h_rmse",    r"$RMSE_h$",                                   "contour_n1_h_rmse_q1_q2_sensibility.png")
-    plot_contour_metric("misfit",    r"$\mathrm{YMisfit}=\int_0^T\|Cz-y^m\|^2 dt$", "contour_n1_misfit_q1_q2_sensibility.png")
-    plot_contour_metric("henergy",   r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$",  "contour_n1_henergy_q1_q2_sensibility.png")
-    plot_contour_metric("energy",    r"$z_0\mathrm{HEnergy}=\|z_0\|^2+\int_0^T \|h(t)\|^2 dt$", "contour_n1_z0henergy_q1_q2_sensibility.png")
-    plot_contour_metric("objective", r"$J(z_0^*,h^*)$ as function of $(q_1, q_2)$",             "contour_n1_objective_q1_q2_sensibility.png")
+    plot_contour_metric("z0_error",  r"$z_{0Error}=|z_0 - z_0^\star|$",             f"contour_n1_z0_error_{file_end}.png")
+    plot_contour_metric("z0_energy", r"$|z_0^\star|$",                              f"contour_n1_z0_energy_{file_end}.png")
+    plot_contour_metric("z_rmse",    r"$RMSE_z$",                                   f"contour_n1_z_rmse_{file_end}.png")
+    plot_contour_metric("h_rmse",    r"$RMSE_h$",                                   f"contour_n1_h_rmse_{file_end}.png")
+    plot_contour_metric("misfit",    r"$\mathrm{YMisfit}=\int_0^T\|Cz-y^m\|^2 dt$", f"contour_n1_misfit_{file_end}.png")
+    plot_contour_metric("henergy",   r"$\mathrm{HEnergy}=\int_0^T \|h(t)\|^2 dt$",  f"contour_n1_henergy_{file_end}.png")
+    plot_contour_metric("energy",    r"$z_0\mathrm{HEnergy}=\|z_0\|^2+\int_0^T \|h(t)\|^2 dt$", f"contour_n1_z0henergy_{file_end}.png")
+    plot_contour_metric("objective", r"$J(z_0^*,h^*)$ as function of $(q_1, q_2)$",             f"contour_n1_objective_{file_end}.png")
 
     if save:
         print("All done. Surfaces, contours and optimal point are saved under:", outdir)
